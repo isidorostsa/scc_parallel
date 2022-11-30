@@ -7,40 +7,34 @@
 
 #include "sparse_util.hpp"
 
-class Graph {
-public:
-
-    Graph(Sparse_matrix& inb_arg, Sparse_matrix& onb_arg) : 
-        inb(inb_arg),
-        onb(onb_arg),
-        n(inb_arg.n),
-        nnz(inb_arg.nnz),
-        scc_id(inb_arg.n, UNASSIGNED),
-        colors(inb_arg.n, NO_COLOR) 
-    {}
-
-    size_t n;
-    size_t nnz;
-
-    Sparse_matrix& inb;
-    Sparse_matrix& onb;
-
-    size_t get_n() const { return n; }
-    size_t get_nnz() const { return nnz; }
-
-    std::vector<size_t> scc_id;
-
-    std::vector<size_t> colors;
-};
-
-
 Coo_matrix loadFile(std::string filename) {
-    std::ifstream fin(filename);
 
+    FILE *fp;
+    fp = fopen(filename.c_str(), "r");
+    if (fp == NULL) {
+        printf("Error opening file");
+        exit(1);
+    }
+
+
+    // read n and nnz
     size_t n, nnz;
-    while(fin.peek() == '%') fin.ignore(2048, '\n');
+    while(fgetc(fp) == '%') {
+        while(fgetc(fp) != '\n');
+    }
 
-    fin >> n >> n >> nnz;
+    fscanf(fp, "%zu %zu %zu", &n, &n, &nnz);
+
+    // skip all the comment lines in the .mtx file
+    char c;
+    do {
+        c = fgetc(fp);
+        if (c == '%') {
+            while (fgetc(fp) != '\n');
+        } else {
+            ungetc(c, fp);
+        }
+    } while (c == '%');
 
     std::vector<size_t> Ai(nnz);
     std::vector<size_t> Aj(nnz);
@@ -48,10 +42,12 @@ Coo_matrix loadFile(std::string filename) {
     size_t throwaway;
     // lines may be of the form: i j or i j throwaway
     for(size_t i = 0; i < nnz; ++i) {
-        fin >> Ai[i] >> Aj[i];
+        // scan line for i and j and throwaway maybe
+
+        fscanf(fp, "%zu %zu", &Ai[i], &Aj[i]);
         Ai[i]--;
         Aj[i]--;
-        if(fin.peek() != '\n') fin >> throwaway;
+        if(fgetc(fp) != '\n') fscanf(fp, "%zu", &throwaway);
     }
 
     return Coo_matrix{n, nnz, Ai, Aj};

@@ -2,7 +2,7 @@
 #include <string>
 #include <fstream>
 
-#include "colorSCC.hpp"
+#include "sparse_util.hpp"
 
 Coo_matrix loadFile(std::string filename) {
     std::ifstream fin(filename);

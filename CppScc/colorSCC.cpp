@@ -200,12 +200,12 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
             for(size_t i = 0; i < vleft.size(); i++) {
                 size_t u = vleft[i];
 
-                for(size_t i = inb.ptr[u]; i < inb.ptr[u + 1]; i++) {
-                    size_t v = inb.val[i];
-                    //if(colors[v] == MAX_COLOR) continue;
+                for(size_t i = onb.ptr[u]; i < onb.ptr[u + 1]; i++) {
+                    size_t v = onb.val[i];
+                    if(colors[v] == MAX_COLOR) continue;
                     size_t new_color = colors[v];
 
-                    if(new_color < colors[u]) {
+                    if(new_color > colors[u]) {
                         colors[u] = new_color;
                         made_change = true;
                     }
@@ -228,7 +228,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
             size_t color = unique_colors[i];
             const size_t _SCC_count = SCC_count + i + 1;
 
-            bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
+            bfs_sparse_colors_all_inplace(onb, color, SCC_id, _SCC_count, colors, color);
         }
         DEB("Finished BFS")
         SCC_count += unique_colors.size();
