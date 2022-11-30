@@ -18,6 +18,8 @@ struct Sparse_matrix {
 
     enum CSC_CSR {CSC, CSR};
     CSC_CSR type;
+
+    Sparse_matrix() : n(0), nnz(0), type(CSC), ptr({}), val({}) {}
 };
 
 Coo_matrix loadFile(std::string filename);

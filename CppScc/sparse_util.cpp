@@ -2,7 +2,37 @@
 #include <string>
 #include <fstream>
 
-#include "colorSCC.hpp"
+#define UNASSIGNED -1
+#define NO_COLOR -1
+
+#include "sparse_util.hpp"
+
+class Graph {
+public:
+
+    Graph(Sparse_matrix& inb_arg, Sparse_matrix& onb_arg) : 
+        inb(inb_arg),
+        onb(onb_arg),
+        n(inb_arg.n),
+        nnz(inb_arg.nnz),
+        scc_id(inb_arg.n, UNASSIGNED),
+        colors(inb_arg.n, NO_COLOR) 
+    {}
+
+    size_t n;
+    size_t nnz;
+
+    Sparse_matrix& inb;
+    Sparse_matrix& onb;
+
+    size_t get_n() const { return n; }
+    size_t get_nnz() const { return nnz; }
+
+    std::vector<size_t> scc_id;
+
+    std::vector<size_t> colors;
+};
+
 
 Coo_matrix loadFile(std::string filename) {
     std::ifstream fin(filename);
