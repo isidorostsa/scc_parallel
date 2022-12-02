@@ -20,9 +20,9 @@ struct Sparse_matrix {
     CSC_CSR type;
 };
 
-Coo_matrix loadFile(std::string filename);
+Coo_matrix loadFileToCoo(const std::string filename);
 
-Sparse_matrix loadFileToCSC(std::string filename);
+Sparse_matrix loadFileToCSC(const std::string filename);
 
 void coo_tocsr(const Coo_matrix& coo, Sparse_matrix& csr);
 

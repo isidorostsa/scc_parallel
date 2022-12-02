@@ -53,7 +53,7 @@ size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, s
     } 
 
     for(size_t source = 0; source < nb.n; source++) {
-        if(!hasOtherWay[source]) {
+        if(!hasOtherWay[source] && SCC_id[source] == UNCOMPLETED_SCC_ID) {
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
@@ -103,6 +103,7 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
 
     auto hasOtherWay = std::vector<bool>(n, false);
 
+    // only going on the vertices left, no need to check for scc_id
     for(size_t index = 0; index < vertices_left; index++) {
         size_t source = vleft[index];
 
@@ -125,12 +126,8 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
     }
 
     for(size_t source = 0; source < n; source++) {
-        // check if it has already been trimmed in the prev step
-        if (SCC_id[source] != UNCOMPLETED_SCC_ID) continue;
-
-        // noone in vleft was pointed to by source, so source is surely trimable
-        // hasOutgoing[index] == false => noone in vleft points to source = vleft[index]
-        if(!hasOtherWay[source]) {
+        // hasOtherWayIndex] == false => noone in vleft points/is pointed to (depending on if nb is incoming or outgoing) to source
+        if(!hasOtherWay[source] && SCC_id[source] == UNCOMPLETED_SCC_ID) {
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
@@ -159,8 +156,7 @@ void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source
     }
 }
 
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Sparse_matrix& onb, bool DEBUG);
-
+// onb may be nullptr but that's fine, it leads to a slightly slower version of the algorithm only where the triming happens
 std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     Sparse_matrix inb;
     Sparse_matrix onb;
@@ -178,17 +174,21 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     M.Aj = std::vector<size_t>();
     DEB("Finished conversion");
 
-    return colorSCC_no_conversion(&inb, onb, DEBUG);
+    return colorSCC_no_conversion(inb, &onb, DEBUG);
 }
 
 // working
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Sparse_matrix& onb, bool DEBUG) {
-    size_t n = onb.n;
+std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix* onb_ptr, bool DEBUG) {
+    size_t n = inb.n;
 
     std::vector<size_t> SCC_id(n);
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
 
+
+    // if it is nullptr then we don't use it ever
+    const bool USE_ONB = onb_ptr != nullptr;
+    const Sparse_matrix& onb = USE_ONB ? *onb_ptr : inb;
 
     std::vector<size_t> vleft(n);
     for (size_t i = 0; i < n; i++) {
@@ -196,10 +196,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Spars
     }
 
     DEB("Starting trim")
-    if(inb) {
-       SCC_count += trimVertices_inplace_normal_first_time(*inb, onb, SCC_id, SCC_count);
+    if(USE_ONB) {
+        SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
     } else {
-         SCC_count += trimVertices_inplace_normal_first_time_missing(onb, SCC_id, SCC_count);
+        SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
     }
     DEB("Finished trim")
 
@@ -229,12 +229,11 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Spars
             for(size_t i = 0; i < vleft.size(); i++) {
                 size_t u = vleft[i];
 
-                for(size_t i = onb.ptr[u]; i < onb.ptr[u + 1]; i++) {
-                    size_t v = onb.val[i];
-                    if(colors[v] == MAX_COLOR) continue;
+                for(size_t i = inb.ptr[u]; i < inb.ptr[u + 1]; i++) {
+                    size_t v = inb.val[i];
                     size_t new_color = colors[v];
 
-                    if(new_color > colors[u]) {
+                    if(new_color < colors[u]) {
                         colors[u] = new_color;
                         made_change = true;
                     }
@@ -257,7 +256,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Spars
             size_t color = unique_colors[i];
             const size_t _SCC_count = SCC_count + i + 1;
 
-            bfs_sparse_colors_all_inplace(onb, color, SCC_id, _SCC_count, colors, color);
+            bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
         }
         DEB("Finished BFS")
         SCC_count += unique_colors.size();
@@ -265,10 +264,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix* inb, const Spars
         // remove all vertices that are in some SCC
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
 
-        if (inb) {
-            SCC_count += trimVertices_inplace_normal(*inb, onb, vleft, SCC_id, SCC_count);
+        if (USE_ONB) {
+            SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
         } else {
-            SCC_count += trimVertices_inplace_normal_missing(onb, vleft, SCC_id, SCC_count);
+            SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
         }
 
         // clean up vleft after trim

@@ -7,7 +7,7 @@
 
 #include "sparse_util.hpp"
 
-Coo_matrix loadFile(std::string filename) {
+Coo_matrix loadFileToCoo(const std::string filename) {
     std::ifstream fin(filename);
 
     size_t n, nnz;
@@ -31,7 +31,7 @@ Coo_matrix loadFile(std::string filename) {
     return Coo_matrix{n, nnz, Ai, Aj};
 }
 
-Sparse_matrix loadFileToCSC(std::string filename) {
+Sparse_matrix loadFileToCSC(const std::string filename) {
     std::cout << "loadFileToCSC file: " << filename << std::endl;
     
 
@@ -73,6 +73,7 @@ void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {
 
     csr_tocsc(csr.n, csr.ptr, csr.val, csc.ptr, csc.val);
 }
+
 void csc_tocsr(const Sparse_matrix& csc, Sparse_matrix& csr) {
     csr_tocsc(csc, csr);
 }
@@ -181,14 +182,4 @@ void coo_tocsc(const Coo_matrix& coo, Sparse_matrix& csc) {
         csc.ptr[i] = last;
         last = temp;
     }
-}
-
-int main(){
-    Sparse_matrix csc = loadFileToCSC("./test.mtx");
-    Sparse_matrix csr;
-    csc_tocsr(csc, csr);
-
-    std::cout << "CSC: " << csc.n << " " << csc.nnz << std::endl;
-
-    return 0;
 }
