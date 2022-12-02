@@ -8,33 +8,12 @@
 #include "sparse_util.hpp"
 
 Coo_matrix loadFile(std::string filename) {
+    std::ifstream fin(filename);
 
-    FILE *fp;
-    fp = fopen(filename.c_str(), "r");
-    if (fp == NULL) {
-        printf("Error opening file");
-        exit(1);
-    }
-
-
-    // read n and nnz
     size_t n, nnz;
-    while(fgetc(fp) == '%') {
-        while(fgetc(fp) != '\n');
-    }
+    while(fin.peek() == '%') fin.ignore(2048, '\n');
 
-    fscanf(fp, "%zu %zu %zu", &n, &n, &nnz);
-
-    // skip all the comment lines in the .mtx file
-    char c;
-    do {
-        c = fgetc(fp);
-        if (c == '%') {
-            while (fgetc(fp) != '\n');
-        } else {
-            ungetc(c, fp);
-        }
-    } while (c == '%');
+    fin >> n >> n >> nnz;
 
     std::vector<size_t> Ai(nnz);
     std::vector<size_t> Aj(nnz);
@@ -42,15 +21,47 @@ Coo_matrix loadFile(std::string filename) {
     size_t throwaway;
     // lines may be of the form: i j or i j throwaway
     for(size_t i = 0; i < nnz; ++i) {
-        // scan line for i and j and throwaway maybe
-
-        fscanf(fp, "%zu %zu", &Ai[i], &Aj[i]);
+        fin >> Ai[i] >> Aj[i];
         Ai[i]--;
         Aj[i]--;
-        if(fgetc(fp) != '\n') fscanf(fp, "%zu", &throwaway);
+        if(fin.peek() != '\n') fin >> throwaway;
     }
 
+    // automatically moves the vectors, no copying is done here
     return Coo_matrix{n, nnz, Ai, Aj};
+}
+
+Sparse_matrix loadFileToCSC(std::string filename) {
+    std::cout << "loadFileToCSC file: " << filename << std::endl;
+    
+
+    std::ifstream fin(filename);
+
+    size_t n = -1, nnz;
+    while(fin.peek() == '%') fin.ignore(2048, '\n');
+
+    fin >> n >> n >> nnz;
+
+    std::vector<size_t> ptr(n+1, 0);
+    std::vector<size_t> val(nnz);
+
+    size_t i, j, throwaway;
+    // lines may be of the form: i j or i j throwaway
+    for(size_t ind = 0; ind < nnz; ++ind) {
+        fin >> i >> j;
+        --i; --j;
+
+        val[ind] = i;
+        ptr[j+1]++;
+
+        if(fin.peek() != '\n') fin >> throwaway;
+    }
+    for(size_t i = 0; i < n; ++i) {
+        ptr[i+1] += ptr[i];
+    }
+
+    // automatically moves the vectors, no copying is done here
+    return Sparse_matrix{n, nnz, ptr, val, Sparse_matrix::CSC};
 }
 
 void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {
@@ -61,6 +72,9 @@ void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {
     csc.type = Sparse_matrix::CSC;
 
     csr_tocsc(csr.n, csr.ptr, csr.val, csc.ptr, csc.val);
+}
+void csc_tocsr(const Sparse_matrix& csc, Sparse_matrix& csr) {
+    csr_tocsc(csc, csr);
 }
 
 void csr_tocsc(const size_t n, const std::vector<size_t>& Ap, const std::vector<size_t>& Aj, 
@@ -167,4 +181,12 @@ void coo_tocsc(const Coo_matrix& coo, Sparse_matrix& csc) {
         csc.ptr[i] = last;
         last = temp;
     }
+}
+
+int main(){
+    Sparse_matrix csc = loadFileToCSC("./test.mtx");
+
+    std::cout << "CSC: " << csc.n << " " << csc.nnz << std::endl;
+
+    return 0;
 }

@@ -10,38 +10,47 @@
 #include "colorSCC.hpp"
 
 int main(int argc, char** argv) {
-    std::string filename(argc > 1 ? argv[1] : "../matrices/sx-stackoverflow/sx-stackoverflow.mtx");
-
+    std::string filename(argc > 1 ? argv[1] : "../matrices/uk-2002/uk-2002.mtx");
+/*
     if(argc<2){
         std::cout << "Assumed " << filename <<  " as input" << std::endl;
     }
 
     std::cout << "Reading file '" << filename << "'\n";
 
-    size_t times = 1;
-
-
     if(argc>2){
         times = std::stoi(argv[2]);
     }
 
-    bool DEBUG = false;
     if(argc>3){
         DEBUG = std::stoi(argv[3]) == 1;
     }
 
-    bool TOO_BIG = false;
     if(argc > 4){
         TOO_BIG = std::atoi(argv[4]) == 1;
     }
+*/
 
-    Coo_matrix coo = loadFile(filename);
+    size_t times = 1;
+    bool DEBUG = false;
+    bool TOO_BIG = true;
+    // load file into csr and time it
 
-    Sparse_matrix csr;
+    auto start_load = std::chrono::high_resolution_clock::now();
+    Sparse_matrix csr = loadFileToCSC(filename);
     Sparse_matrix csc;
+    csr_tocsc(csc, csr);
+    auto end_load = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = end_load-start_load;
+    std::cout << "Loading time: " << elapsed_seconds.count() << "s\n";
+
+/*
+    Coo_matrix coo = loadFile(filename);
+    Sparse_matrix csc;
+    Sparse_matrix csr;
 
     std::cout << "Loaded matrix" << std::endl;
-
     if(TOO_BIG){
         std::cout << "Too big matrix, will go coo -> csr, csr -> csc instead of coo -> csr, csc" << std::endl;
 
@@ -73,12 +82,15 @@ int main(int argc, char** argv) {
         std::cout << "coo -> csr, csc took " << elapsed.count() << "s" << std::endl;
     }
 
+*/
+
+
     std::cout << "Running " << times << " times\n";
 
     std::vector<size_t> SCC_id;
     auto start = std::chrono::high_resolution_clock::now();
     for(size_t i = 0; i < times; i++) {
-        SCC_id = colorSCC_no_conversion(csc, csr, DEBUG);
+        SCC_id = colorSCC_no_conversion(&csc, csr, DEBUG);
     }
     auto end = std::chrono::high_resolution_clock::now();
 
