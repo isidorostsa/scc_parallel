@@ -61,8 +61,13 @@ int main(int argc, char** argv) {
     std::vector<size_t> SCC_id;
     auto start = std::chrono::high_resolution_clock::now();
     for(size_t i = 0; i < times; i++) {
-        // csr_ptr may be null, but that's fine
-        SCC_id = colorSCC_no_conversion(csc, csr_ptr, DEBUG);
+        // csr_ptr may be null, but that's fine, we pass csc twice 
+        Sparse_matrix placeholder = Sparse_matrix();
+        if(csr_ptr) {
+            SCC_id = colorSCC_no_conversion(csc, *csr_ptr, true, DEBUG);
+        } else {
+            SCC_id = colorSCC_no_conversion(csc, placeholder, false, DEBUG);
+        }
     }
     auto end = std::chrono::high_resolution_clock::now();
 

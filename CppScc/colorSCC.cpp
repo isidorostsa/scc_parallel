@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <queue>
-#include <set>
 #include <unordered_set>
 #include <chrono>
 
@@ -163,32 +162,24 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 
     DEB("Starting conversion");
     
-    COZ_BEGIN("convert");
-
     coo_tocsr(M, inb);
     coo_tocsc(M, onb);
 
-    COZ_END("convert");
     // if we are poor on memory, we can free M
     M.Ai = std::vector<size_t>();
     M.Aj = std::vector<size_t>();
     DEB("Finished conversion");
 
-    return colorSCC_no_conversion(inb, &onb, DEBUG);
+    return colorSCC_no_conversion(inb, onb, true, DEBUG);
 }
 
-// working
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix* onb_ptr, bool DEBUG) {
+// If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
+std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
 
     std::vector<size_t> SCC_id(n);
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
-
-
-    // if it is nullptr then we don't use it ever
-    const bool USE_ONB = onb_ptr != nullptr;
-    const Sparse_matrix& onb = USE_ONB ? *onb_ptr : inb;
 
     std::vector<size_t> vleft(n);
     for (size_t i = 0; i < n; i++) {
