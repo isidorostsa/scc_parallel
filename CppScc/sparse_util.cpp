@@ -185,6 +185,8 @@ void coo_tocsc(const Coo_matrix& coo, Sparse_matrix& csc) {
 
 int main(){
     Sparse_matrix csc = loadFileToCSC("./test.mtx");
+    Sparse_matrix csr;
+    csc_tocsr(csc, csr);
 
     std::cout << "CSC: " << csc.n << " " << csc.nnz << std::endl;
 
