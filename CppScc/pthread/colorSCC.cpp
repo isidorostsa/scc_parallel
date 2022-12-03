@@ -38,8 +38,6 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
-    //std::cout << "trimed: " << trimed << std::endl;
-
     return trimed;
 }
 
