@@ -5,7 +5,6 @@
 #include <string>
 #include <queue>
 #include <unordered_set>
-#include <chrono>
 
 #include "sparse_util.hpp"
 #include "colorSCC.hpp"
