@@ -74,6 +74,7 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
     uk-2002: 3887634
     arabic-2005: 4000414
     uk-2005: 5811041
+    twitter7: 8044728
     */
 
     if(dataset_name == "celegansneural") {
@@ -119,6 +120,10 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
     } else if (dataset_name == "uk-2005") {
         if (real_scc_count != 5811041) {
             std::cout << "ERROR: uk-2005 found " << real_scc_count << " instead of 5811041" << std::endl;
+        }
+    } else if (dataset_name == "twitter7") {
+        if (real_scc_count != 8044728) {
+            std::cout << "ERROR: twitter7 found " << real_scc_count << " instead of 8044728" << std::endl;
         }
     } else {
         std::cout << "ERROR: Unknown dataset " << dataset_name << std::endl;
@@ -181,7 +186,7 @@ int main(int argc, char** argv) {
                 inputFilename = inputFilename.substr(0, inputFilename.size() - 1);
             }
 
-            // files: celegansneural, foldoc, language, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005
+            // files: celegansneural, foldoc, language, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005, twitter7
             filesToRun = {
                 inputFilename + "/celegansneural/celegansneural.mtx",
                 inputFilename + "/foldoc/foldoc.mtx",
@@ -192,7 +197,8 @@ int main(int argc, char** argv) {
                 inputFilename + "/indochina-2004/indochina-2004.mtx",
                 inputFilename + "/uk-2002/uk-2002.mtx",
                 inputFilename + "/arabic-2005/arabic-2005.mtx",
-                inputFilename + "/uk-2005/uk-2005.mtx"
+                inputFilename + "/uk-2005/uk-2005.mtx",
+                inputFilename + "/twitter7/twitter7.mtx"
             };
         }
     }

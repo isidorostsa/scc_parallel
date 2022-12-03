@@ -18,7 +18,7 @@
 #include <coz.h>
 
 #define NUM_THREADS 24
-#define BFS_GRAIN_SIZE 30
+#define BFS_GRAIN_SIZE 3
 #define COLOR_GRAIN_SIZE 1000
 
 #define UNCOMPLETED_SCC_ID -1
