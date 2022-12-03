@@ -202,22 +202,6 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     return colorSCC_no_conversion(inb, onb, true, DEBUG);
 }
 
-struct timer{
-    std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
-    std::chrono::duration<float> duration;
-    bool print;
-
-    timer(bool print = true) : print(print) {
-        start = std::chrono::high_resolution_clock::now();
-    }
-
-    ~timer() {
-        end = std::chrono::high_resolution_clock::now();
-        duration = end - start;
-        if (print) std::cout << "Timer took " << duration.count() << "s" << std::endl;
-    }
-};
-
 // If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
@@ -318,8 +302,8 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Finished trim + erasure")
 
     }
-    std::cout << "Total tries: " << total_tries << std::endl;
-    std::cout << "Total iterations: " << iter << std::endl;
-    std::cout << "Total SCCs: " << SCC_count << std::endl;
+    DEB("Total tries: " << total_tries)
+    DEB("Total iterations: " << iter)
+    DEB("Total SCCs: " << SCC_count)
     return SCC_id;
 }

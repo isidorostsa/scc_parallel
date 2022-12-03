@@ -29,9 +29,7 @@ Coo_matrix loadFileToCoo(const std::string filename) {
 }
 
 Sparse_matrix loadFileToCSC(const std::string filename) {
-    std::cout << "loadFileToCSC file: " << filename << std::endl;
     std::ifstream fin(filename);
-    std::cout << "loadFileToCSC file opened" << std::endl;
 
     size_t n = -1, nnz;
     while(fin.peek() == '%') fin.ignore(2048, '\n');
@@ -40,8 +38,6 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
 
     std::vector<size_t> ptr(n+1, 0);
     std::vector<size_t> val(nnz);
-
-    std::cout << "loadFileToCSC vectors created" << std::endl;
 
     size_t i, j, throwaway;
     // lines may be of the form: i j or i j throwaway

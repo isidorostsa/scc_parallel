@@ -18,11 +18,11 @@
 #include <coz.h>
 
 #define NUM_THREADS 24
-#define BFS_GRAIN_SIZE 60
-#define COLOR_GRAIN_SIZE 10000
+#define BFS_GRAIN_SIZE 30
+#define COLOR_GRAIN_SIZE 1000
 
-#define UNCOMPLETED_SCC_ID 18446744073709551615
-#define MAX_COLOR 18446744073709551615
+#define UNCOMPLETED_SCC_ID -1
+#define MAX_COLOR -1
 
 // For the first time only, where all SCC_ids are -1
 size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
@@ -393,8 +393,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         // clean up vleft after trim
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
     }
-    std::cout << "Total tries: " << total_tries << std::endl;
-    std::cout << "Total iterations: " << iter << std::endl;
-    std::cout << "Total SCCs: " << SCC_count << std::endl;
+    DEB("Finished")
+
+    DEB("Total tries: " << total_tries)
+    DEB("Total iterations: " << iter)
+    DEB("Total SCCs: " << SCC_count)
     return SCC_id;
 }

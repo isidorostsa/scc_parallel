@@ -1,0 +1,8 @@
+Starting with options: 
+Times: 3
+Debug: 0
+Too big: 1
+
+DATASET: celegansneural TIME: 0ms
+DATASET: foldoc TIME: 1ms
+DATASET: language TIME: 65ms

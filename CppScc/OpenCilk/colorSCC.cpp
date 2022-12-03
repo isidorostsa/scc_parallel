@@ -285,9 +285,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Finished trim + erasure")
  
     }
-
-    std::cout << "Total tries: " << total_tries << std::endl;
-    std::cout << "Total iterations: " << iter << std::endl;
+    DEB("Finished")
+    DEB("Total tries: " << total_tries)
+    DEB("Total iterations: " << iter)
 
 
     return SCC_id;

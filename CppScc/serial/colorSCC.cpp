@@ -13,8 +13,8 @@
 
 #define DEB(x) if(DEBUG) {std::cout << x << std::endl;}
 
-#define UNCOMPLETED_SCC_ID 18446744073709551615
-#define MAX_COLOR 18446744073709551615
+#define UNCOMPLETED_SCC_ID -1
+#define MAX_COLOR -1
 
 // For the first time only, where all SCC_ids are -1
 size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
@@ -176,8 +176,7 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
 
-    std::vector<size_t> SCC_id(n);
-    std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
+    std::vector<size_t> SCC_id(n, UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
 
     std::vector<size_t> vleft(n);
@@ -185,7 +184,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         vleft[i] = i;
     }
 
-    DEB("Starting trim")
+    DEB("First time trim")
     if(USE_ONB) {
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
     } else {
@@ -193,8 +192,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     }
     DEB("Finished trim")
 
+    DEB("First erasure")
     std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
-
+    DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
     std::vector<size_t> colors(n);
@@ -203,7 +203,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     size_t total_tries = 0;
     while(!vleft.empty()) {
         iter++;
-
         DEB("Starting while loop iteration " << iter)
 
         for(size_t i = 0; i < n; i++) {
@@ -211,19 +210,23 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         }
 
         DEB("Starting to color")
+
+
         bool made_change = true;
+
         while(made_change) {
             made_change = false;
-
             total_tries++;
             for(size_t i = 0; i < vleft.size(); i++) {
                 size_t u = vleft[i];
 
-                for(size_t i = inb.ptr[u]; i < inb.ptr[u + 1]; i++) {
-                    size_t v = inb.val[i];
+                for(size_t j = inb.ptr[u]; j < inb.ptr[u + 1]; j++) {
+                    size_t v = inb.val[j];
+
                     size_t new_color = colors[v];
 
                     if(new_color < colors[u]) {
+
                         colors[u] = new_color;
                         made_change = true;
                     }
@@ -238,36 +241,32 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Found " << unique_colors_set.size() << " unique colors")
 
         auto unique_colors = std::vector<size_t>(unique_colors_set.begin(), unique_colors_set.end());
+        DEB("End of Set of colors part");
 
-        //std::sort(unique_colors.begin(), unique_colors.end());
-
-        DEB("Starting BFS")
+        DEB("Starting bfs")
         for(size_t i = 0; i < unique_colors.size(); i++) {
-            size_t color = unique_colors[i];
+            const size_t color = unique_colors[i];
             const size_t _SCC_count = SCC_count + i + 1;
 
             bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
         }
-        DEB("Finished BFS")
         SCC_count += unique_colors.size();
+        DEB("Finished BFS")
 
+        DEB("Trim + erasure")
         // remove all vertices that are in some SCC
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
 
         if (USE_ONB) {
-            SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
         } else {
-            SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
         }
-
         // clean up vleft after trim
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
+        DEB("Finished trim + erasure")
  
     }
-
-    std::cout << "Total tries: " << total_tries << std::endl;
-    std::cout << "Total iterations: " << iter << std::endl;
-
-
+    DEB("Finished")
     return SCC_id;
 }

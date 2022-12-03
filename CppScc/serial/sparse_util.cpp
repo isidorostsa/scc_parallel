@@ -28,13 +28,10 @@ Coo_matrix loadFileToCoo(const std::string filename) {
     }
 
     // automatically moves the vectors, no copying is done here
-    return Coo_matrix{n, nnz, Ai, Aj};
+    return Coo_matrix{n, nnz, std::move(Ai), std::move(Aj)};
 }
 
 Sparse_matrix loadFileToCSC(const std::string filename) {
-    std::cout << "loadFileToCSC file: " << filename << std::endl;
-    
-
     std::ifstream fin(filename);
 
     size_t n = -1, nnz;
@@ -61,7 +58,7 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
     }
 
     // automatically moves the vectors, no copying is done here
-    return Sparse_matrix{n, nnz, ptr, val, Sparse_matrix::CSC};
+    return Sparse_matrix{n, nnz, std::move(ptr), std::move(val), Sparse_matrix::CSC};
 }
 
 void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {
