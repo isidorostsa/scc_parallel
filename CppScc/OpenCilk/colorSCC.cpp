@@ -6,7 +6,6 @@
 #include <queue>
 #include <atomic>
 #include <unordered_set>
-#include <set>
 #include <chrono>
 #include <atomic>
 
@@ -24,6 +23,7 @@
 
 // For the first time only, where all SCC_ids are -1
 size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+    //std::atomic<size_t> trimed(0);
     std::atomic<size_t> trimed(0);
 
     cilk_for(size_t source = 0; source < inb.n; source++) {
@@ -37,13 +37,44 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
     }
     //std::cout << "trimed: " << trimed << std::endl;
 
-    return trimed.load();
+    return trimed;
+}
+
+// vleft + onb
+size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+    std::atomic<size_t> trimed(0);
+    //std::vector<bool> hasOtherWay(nb.n, false);
+
+    std::deque<std::atomic<bool>> hasOtherWay;
+    for(size_t i = 0; i < nb.n; i++) {
+        hasOtherWay.emplace_back(false);
+    }
+
+    cilk_for(size_t source = 0; source < nb.n; source++) {
+        if(nb.ptr[source] == nb.ptr[source + 1]) {
+            SCC_id[source] = SCC_count + ++trimed;
+        } else {
+            for (size_t i = nb.ptr[source]; i < nb.ptr[source + 1]; i++) {
+                size_t neighbor = nb.val[i];
+                hasOtherWay[neighbor] = true;
+            }
+        }
+    } 
+
+    cilk_for(size_t source = 0; source < nb.n; source++) {
+        if(!hasOtherWay[source] && SCC_id[source] == UNCOMPLETED_SCC_ID) {
+            SCC_id[source] = SCC_count + ++trimed;
+        }
+    }
+
+    return trimed;
 }
 
 // vleft + onb
 size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
                                     std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     std::atomic<size_t> trimed(0);
+    //size_t trimed = 0;
 
     cilk_for(size_t index = 0; index < vleft.size(); index++) {
         const size_t source = vleft[index];
@@ -68,51 +99,49 @@ size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
-    //std::cout << "trimed: " << trimed << std::endl;
 
-    return trimed.load();
+    return trimed;
 }
 
-size_t trimVertices_inplace_normal_no_onb(const Sparse_matrix& inb, const std::vector<size_t>& vleft,
+size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
                                         std::vector<size_t>& SCC_id, size_t SCC_count) { 
 
-    size_t trimed = 0;
+    //size_t trimed = 0;
+    std::atomic<size_t> trimed(0);
     const size_t vertices_left = vleft.size();
-    const size_t n = inb.n;
+    const size_t n = nb.n;
 
-    auto hasOutgoing = std::vector<bool>(n, false);
+    std::deque<std::atomic<bool>> hasOtherWay;
+    for(size_t i = 0; i < n; i++) {
+        hasOtherWay.emplace_back(false);
+    }
 
-    for(size_t index = 0; index < vertices_left; index++) {
+    // only going on the vertices left, no need to check for scc_id
+    cilk_for(size_t index = 0; index < vertices_left; index++) {
         size_t source = vleft[index];
 
-        bool hasIncoming = false;
-        for(size_t i = inb.ptr[source]; i < inb.ptr[source + 1]; i++) {
-            size_t neighbor = inb.val[i];
+        bool hasOneWay = false;
+        for(size_t i = nb.ptr[source]; i < nb.ptr[source + 1]; i++) {
+            size_t neighbor = nb.val[i];
 
             // if SCC_id[neighbor] == UNCOMPLETED_SCC_ID, then neighbor in vleft
             if(SCC_id[neighbor] == UNCOMPLETED_SCC_ID) {
-                hasIncoming = true;
+                hasOneWay = true;
                 // need index of neighbor
-                hasOutgoing[neighbor] = true;
+                hasOtherWay[neighbor] = true;
             }
         }
 
     // no inc neighbors then surely trim
-        if(!hasIncoming) {
-            trimed++;
-            SCC_id[source] = SCC_count + trimed;
+        if(!hasOneWay) {
+            SCC_id[source] = SCC_count + ++trimed;
         }
     }
 
-    for(size_t source = 0; source < n; source++) {
-        // check if it has already been trimmed in the prev step
-        if (SCC_id[source] != UNCOMPLETED_SCC_ID) continue;
-
-        // noone in vleft was pointed to by source, so source is surely trimable
-        // hasOutgoing[index] == false => noone in vleft points to source = vleft[index]
-        if(!hasOutgoing[source]) {
-            trimed++;
-            SCC_id[source] = SCC_count + trimed;
+    cilk_for(size_t source = 0; source < n; source++) {
+        // hasOtherWayIndex] == false => noone in vleft points/is pointed to (depending on if nb is incoming or outgoing) to source
+        if(!hasOtherWay[source] && SCC_id[source] == UNCOMPLETED_SCC_ID) {
+            SCC_id[source] = SCC_count + ++trimed;
         }
     }
     return trimed;
@@ -158,15 +187,14 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     M.Aj = std::vector<size_t>();
     DEB("Finished conversion");
 
-    return colorSCC_no_conversion(inb, onb, DEBUG);
+    return colorSCC_no_conversion(inb, onb, true, DEBUG);
 }
 
 // working
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool DEBUG) {
+std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
 
-    std::vector<size_t> SCC_id(n);
-    std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
+    std::vector<size_t> SCC_id(n, UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
 
     std::vector<size_t> vleft(n);
@@ -174,12 +202,17 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         vleft[i] = i;
     }
 
-    DEB("Starting trim")
-    SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
+    DEB("First time trim")
+    if(USE_ONB) {
+        SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
+    } else {
+        SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
+    }
     DEB("Finished trim")
 
+    DEB("First erasure")
     std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
-
+    DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
     std::vector<size_t> colors(n);
@@ -188,7 +221,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     size_t total_tries = 0;
     while(!vleft.empty()) {
         iter++;
-
         DEB("Starting while loop iteration " << iter)
 
         cilk_for(size_t i = 0; i < n; i++) {
@@ -198,15 +230,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Starting to color")
 
 
-        std::vector<bool> changedColor(n);
-//        std::atomic<bool> made_change(true);
+        std::atomic<bool> made_change(true);
 
-        std::vector<bool> made_change(1, true);
-        while(made_change[0]) {
-            made_change[0] = false;
-
-            //std::fill(changedColor.begin(), changedColor.end(), false);
-
+        while(made_change) {
+            made_change = false;
             total_tries++;
             cilk_for(size_t i = 0; i < vleft.size(); i++) {
                 size_t u = vleft[i];
@@ -219,15 +246,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
                     if(new_color < colors[u]) {
 
                         colors[u] = new_color;
-                        //changedColor[u] = true;
-                        made_change[0] = true;
-                        //made_change = true;
+                        made_change = true;
                     }
                 }
             }
-
-            // to fix weird exiting early bug
-            //made_change = std::any_of(changedColor.begin(), changedColor.end(), [](bool b) { return b; });
         }
         DEB("Finished coloring")
 
@@ -237,25 +259,30 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Found " << unique_colors_set.size() << " unique colors")
 
         auto unique_colors = std::vector<size_t>(unique_colors_set.begin(), unique_colors_set.end());
+        DEB("End of Set of colors part");
 
-        //std::sort(unique_colors.begin(), unique_colors.end());
-
-        DEB("Starting BFS")
-        for(size_t i = 0; i < unique_colors.size(); i++) {
-            size_t color = unique_colors[i];
+        DEB("Starting bfs")
+        cilk_for(size_t i = 0; i < unique_colors.size(); i++) {
+            const size_t color = unique_colors[i];
             const size_t _SCC_count = SCC_count + i + 1;
 
             bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
         }
-        DEB("Finished BFS")
         SCC_count += unique_colors.size();
+        DEB("Finished BFS")
 
+        DEB("Trim + erasure")
         // remove all vertices that are in some SCC
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
-        SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
 
+        if (USE_ONB) {
+           SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
+        } else {
+           SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
+        }
         // clean up vleft after trim
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
+        DEB("Finished trim + erasure")
  
     }
 
@@ -264,42 +291,4 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
 
     return SCC_id;
-}
-
-int _main(int argc, char** argv) {
-
-    // variable filename = argv[1] or "../../matrices/languague/languague.mtx" by default
-    std::string filename = (argc > 1) ? argv[1] : "../fsad.mdfdsatrdsfices/languague/languague.mtx";
-    //intetional bug to remind you to change this 
-
-    if(argc<2){
-        std::cout << "Assumed " << filename <<  " as input" << std::endl;
-    }
-
-    std::cout << "Reading file '" << filename << "'\n";
-
-    size_t times = 1;
-
-    if(argc>2){
-        times = std::stoi(argv[2]);
-    }
-
-    std::cout << "Running " << times << " times\n";
-
-    Coo_matrix coo = loadFile(filename);
-
-    std::cout << "Loaded matrix" << std::endl;
-
-    std::vector<size_t> SCC_id;
-    auto start = std::chrono::high_resolution_clock::now();
-    for(size_t i = 0; i < times; i++) {
-        SCC_id = colorSCC(coo, false);
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-
-
-    std::cout << "Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()/times << "ms" << std::endl;
-    std::cout << "SCC count: " << std::set<size_t>(SCC_id.begin(), SCC_id.end()).size() << std::endl;
-
-    return 0;
 }

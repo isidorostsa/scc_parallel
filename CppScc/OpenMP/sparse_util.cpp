@@ -2,9 +2,6 @@
 #include <string>
 #include <fstream>
 
-#define UNASSIGNED -1
-#define NO_COLOR -1
-
 #include "sparse_util.hpp"
 
 Coo_matrix loadFileToCoo(const std::string filename) {
@@ -28,7 +25,7 @@ Coo_matrix loadFileToCoo(const std::string filename) {
     }
 
     // automatically moves the vectors, no copying is done here
-    return Coo_matrix{n, nnz, Ai, Aj};
+    return Coo_matrix{n, nnz, std::move(Ai), std::move(Aj)};
 }
 
 Sparse_matrix loadFileToCSC(const std::string filename) {

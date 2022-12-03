@@ -24,4 +24,4 @@ void bfs_sparse_colors_all_inplace(const Sparse_matrix& nb, const size_t source,
 
 std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG = true);
 
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool DEBUG);
+std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG);

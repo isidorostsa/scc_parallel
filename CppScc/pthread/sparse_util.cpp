@@ -2,9 +2,6 @@
 #include <string>
 #include <fstream>
 
-#define UNASSIGNED -1
-#define NO_COLOR -1
-
 #include "sparse_util.hpp"
 
 Coo_matrix loadFileToCoo(const std::string filename) {
@@ -28,14 +25,13 @@ Coo_matrix loadFileToCoo(const std::string filename) {
     }
 
     // automatically moves the vectors, no copying is done here
-    return Coo_matrix{n, nnz, Ai, Aj};
+    return Coo_matrix{n, nnz, std::move(Ai), std::move(Aj)};
 }
 
 Sparse_matrix loadFileToCSC(const std::string filename) {
     std::cout << "loadFileToCSC file: " << filename << std::endl;
-    
-
     std::ifstream fin(filename);
+    std::cout << "loadFileToCSC file opened" << std::endl;
 
     size_t n = -1, nnz;
     while(fin.peek() == '%') fin.ignore(2048, '\n');
@@ -44,6 +40,8 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
 
     std::vector<size_t> ptr(n+1, 0);
     std::vector<size_t> val(nnz);
+
+    std::cout << "loadFileToCSC vectors created" << std::endl;
 
     size_t i, j, throwaway;
     // lines may be of the form: i j or i j throwaway
@@ -61,7 +59,7 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
     }
 
     // automatically moves the vectors, no copying is done here
-    return Sparse_matrix{n, nnz, ptr, val, Sparse_matrix::CSC};
+    return Sparse_matrix{n, nnz, std::move(ptr), std::move(val), Sparse_matrix::CSC};
 }
 
 void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {

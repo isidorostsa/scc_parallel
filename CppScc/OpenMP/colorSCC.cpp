@@ -7,6 +7,7 @@
 #include <deque>
 #include <unordered_set>
 #include <atomic>
+#include <chrono>
 
 #include "colorSCC.hpp"
 #include "sparse_util.hpp"
@@ -50,7 +51,7 @@ size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, s
  //   bool hasOtherWay[nb.n];
     //std::fill(hasOtherWay, hasOtherWay + nb.n, false);
 
-    //# pragma omp parallel for shared(trimed, hasOtherWay)
+    # pragma omp parallel for shared(trimed, hasOtherWay)
     for(size_t source = 0; source < nb.n; source++) {
         if(nb.ptr[source] == nb.ptr[source + 1]) {
             SCC_id[source] = SCC_count + ++trimed;
@@ -114,8 +115,10 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
     const size_t vertices_left = vleft.size();
     const size_t n = nb.n;
 
-    bool hasOtherWay[n];
-    std::fill(hasOtherWay, hasOtherWay + n, false);
+    std::deque<std::atomic<bool>> hasOtherWay;
+    for(size_t i = 0; i < n; i++) {
+        hasOtherWay.emplace_back(false);
+    }
 
     // only going on the vertices left, no need to check for scc_id
     #pragma omp parallel for shared(trimed, hasOtherWay)
@@ -199,12 +202,27 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     return colorSCC_no_conversion(inb, onb, true, DEBUG);
 }
 
+struct timer{
+    std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+    std::chrono::duration<float> duration;
+    bool print;
+
+    timer(bool print = true) : print(print) {
+        start = std::chrono::high_resolution_clock::now();
+    }
+
+    ~timer() {
+        end = std::chrono::high_resolution_clock::now();
+        duration = end - start;
+        if (print) std::cout << "Timer took " << duration.count() << "s" << std::endl;
+    }
+};
+
 // If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
 
-    std::vector<size_t> SCC_id(n);
-    std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
+    std::vector<size_t> SCC_id(n, UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
 
     std::vector<size_t> vleft(n);
@@ -212,7 +230,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         vleft[i] = i;
     }
 
-    DEB("Starting trim")
+    DEB("First time trim")
     if(USE_ONB) {
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
     } else {
@@ -220,8 +238,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     }
     DEB("Finished trim")
 
+    DEB("First erasure")
     std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
-
+    DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
     std::vector<size_t> colors(n);
@@ -266,7 +285,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Finished coloring")
 
         DEB("Set of colors part")
-
         auto unique_colors_set = std::unordered_set<size_t> (colors.begin(), colors.end());
         unique_colors_set.erase(MAX_COLOR);
 
@@ -286,16 +304,19 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         SCC_count += unique_colors.size();
         DEB("Finished BFS")
 
+        DEB("Trim + erasure")
         // remove all vertices that are in some SCC
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
 
         if (USE_ONB) {
-           //SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
         } else {
-           //SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
         }
         // clean up vleft after trim
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
+        DEB("Finished trim + erasure")
+
     }
     std::cout << "Total tries: " << total_tries << std::endl;
     std::cout << "Total iterations: " << iter << std::endl;
