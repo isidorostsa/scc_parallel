@@ -126,7 +126,7 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
             std::cout << "ERROR: twitter7 found " << real_scc_count << " instead of 8044728" << std::endl;
         }
     } else {
-        std::cout << "ERROR: Unknown dataset " << dataset_name << std::endl;
+        std::cout << "ERROR: Unknown dataset " << dataset_name << "found " << real_scc_count << std::endl;
     }
 }
 
@@ -214,7 +214,8 @@ int main(int argc, char** argv) {
         testFile(filename, times, DEBUG, TOO_BIG);
     }
 
-
+    std::cout << std::endl;
+    std::cout << "---END---" << std::endl;
 
     return 0;
 }
