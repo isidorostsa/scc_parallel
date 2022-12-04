@@ -199,8 +199,8 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
-    std::vector<size_t> colors(n, -1);
-    //std::fill(colors.begin(), colors.end(), UNCOMPLETED_SCC_ID);
+    std::vector<size_t> colors(n);
+    std::fill(colors.begin(), colors.end(), -1);
 
     size_t iter = 0;
     size_t total_tries = 0;
