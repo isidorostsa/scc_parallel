@@ -15,7 +15,6 @@
 #include "colorSCC.hpp"
 
 #include <pthread.h>
-#include <coz.h>
 
 #define BFS_GRAIN_SIZE 3
 #define COLOR_GRAIN_SIZE 1000
@@ -250,8 +249,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     size_t SCC_count = 0;
 
     DEB("Starting trim")
-    COZ_BEGIN("trim");
-
     std::vector<size_t> vleft(n);
     for (size_t i = 0; i < n; i++) {
         vleft[i] = i;
@@ -283,7 +280,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
             colors[i] = SCC_id[i] == UNCOMPLETED_SCC_ID ? i : MAX_COLOR;
         }
 
-        COZ_BEGIN("coloring");
         DEB("Starting to color")
         bool made_change = true;
         while(made_change) {
@@ -313,19 +309,15 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         }
 
         DEB("Finished coloring")
-        COZ_END("coloring");
 
-        COZ_BEGIN("Set of colors part");
         DEB("Set of colors part");
         auto unique_colors_set = std::unordered_set<size_t> (colors.begin(), colors.end());
         unique_colors_set.erase(MAX_COLOR);
         DEB("Found " << unique_colors_set.size() << " unique colors")
         auto unique_colors = std::vector<size_t>(unique_colors_set.begin(), unique_colors_set.end());
         DEB("Set of colors part");
-        COZ_END("Set of colors part");
 
         DEB("Starting bfs")
-        COZ_BEGIN("BFS");
 
         const size_t num_colors = unique_colors.size();
         // each thread will get a different set of colors to work on
@@ -360,7 +352,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         }
         SCC_count += unique_colors.size();
         DEB("Finished BFS")
-        COZ_END("BFS");
 
         // remove all vertices that are in some SCC
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
