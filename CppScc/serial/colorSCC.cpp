@@ -175,6 +175,8 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
 
+    std::cout << "Got here";
+
     std::vector<size_t> SCC_id(n);
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
