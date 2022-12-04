@@ -9,8 +9,6 @@
 #include "sparse_util.hpp"
 #include "colorSCC.hpp"
 
-#include <coz.h>
-
 #define DEB(x) if(DEBUG) {std::cout << x << std::endl;}
 
 #define UNCOMPLETED_SCC_ID -1
@@ -38,6 +36,7 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
 size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
     std::vector<bool> hasOtherWay(nb.n, false);
+
 
     for(size_t source = 0; source < nb.n; source++) {
         if(nb.ptr[source] == nb.ptr[source + 1]) {
@@ -184,7 +183,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         vleft[i] = i;
     }
 
-    DEB("First time trim")
+    std::cout << "Got here";
+    //DEB("First time trim")
+    std::cout << "Got here";
     if(USE_ONB) {
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
     } else {
