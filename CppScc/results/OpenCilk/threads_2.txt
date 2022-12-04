@@ -1,0 +1,19 @@
+Starting with options: 
+Times: 1
+Debug: 0
+Too big: 1
+
+DATASET: celegansneural	TIME: 91us
+DATASET: foldoc	TIME: 2693us
+DATASET: language	TIME: 52807us
+DATASET: eu-2005	TIME: 262206us
+DATASET: wiki-topcats	TIME: 2801727us
+DATASET: sx-stackoverflow	TIME: 1049774us
+DATASET: wb-edu	TIME: 27194203us
+DATASET: indochina-2004	TIME: 12531087us
+DATASET: uk-2002	TIME: 24198045us
+DATASET: arabic-2005	TIME: 17836869us
+DATASET: uk-2005	TIME: 93590174us
+DATASET: twitter7	TIME: 176588779us
+
+---END---

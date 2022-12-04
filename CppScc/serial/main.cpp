@@ -19,6 +19,11 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
         return;
     }
 
+    if(times == 0) {
+        std::cout << "Invalid number of times to run" << std::endl;
+        return;
+    }
+
     DEB("Loading file into CSC")
     auto start_load_csc = std::chrono::high_resolution_clock::now();
     Sparse_matrix csc = loadFileToCSC(filename);

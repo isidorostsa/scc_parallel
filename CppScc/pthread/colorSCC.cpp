@@ -17,7 +17,6 @@
 #include <pthread.h>
 #include <coz.h>
 
-#define NUM_THREADS 24
 #define BFS_GRAIN_SIZE 3
 #define COLOR_GRAIN_SIZE 1000
 
@@ -242,29 +241,9 @@ void coloring_partitions_runner(coloring_partitions_runner_struct* coloring_info
     }
 }
 
-std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
-    Sparse_matrix inb;
-    Sparse_matrix onb;
-
-    DEB("Starting conversion");
-    
-    COZ_BEGIN("convert");
-
-    // probably should be done in parallel
-    coo_tocsr(M, inb);
-    coo_tocsc(M, onb);
-
-    COZ_END("convert");
-    // if we are poor on memory, we can free M
-    M.Ai = std::vector<size_t>();
-    M.Aj = std::vector<size_t>();
-    DEB("Finished conversion");
-
-    return colorSCC_no_conversion(inb, onb, true, DEBUG);
-}
-
 // working
-std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
+std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG, const size_t NUM_THREADS) {
+
     size_t n = inb.n;
     //size_t nnz = M.nnz;
     std::vector<size_t> SCC_id(n, UNCOMPLETED_SCC_ID);

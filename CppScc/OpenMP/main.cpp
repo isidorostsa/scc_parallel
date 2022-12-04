@@ -19,6 +19,11 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
         return;
     }
 
+    if(times == 0) {
+        std::cout << "Invalid number of times to run" << std::endl;
+        return;
+    }
+
     DEB("Loading file into CSC")
     auto start_load_csc = std::chrono::high_resolution_clock::now();
     Sparse_matrix csc = loadFileToCSC(filename);
@@ -39,24 +44,29 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
     DEB("Running " << times << " times")
 
     std::vector<size_t> SCC_id;
-    auto start = std::chrono::high_resolution_clock::now();
+    std::vector<int64_t> times_in_us;
+
+    std::string dataset_name = filename.substr(filename.find_last_of("/") + 1);
+    dataset_name = dataset_name.substr(0, dataset_name.find_last_of("."));
+
     for(size_t i = 0; i < times; i++) {
-        // csr_ptr may be null, but that's fine, we pass csc twice 
         DEB("Starting run " << i)
+        // csr may a null object, but that's fine, the next variable communicates that
+        auto start = std::chrono::high_resolution_clock::now();
         if(!TOO_BIG) {
             SCC_id = colorSCC_no_conversion(csc, csr, true, DEBUG);
         } else {
             SCC_id = colorSCC_no_conversion(csc, csr, false, DEBUG);
         }
+        auto end = std::chrono::high_resolution_clock::now();
+
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        times_in_us.push_back(time);
+        std::cout << "DATASET: " << dataset_name << "\tTIME: " << time << "us" << std::endl;
+
         DEB("Finished run " << i)
     }
     DEB("Finished all runs")
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::string dataset_name = filename.substr(filename.find_last_of("/") + 1);
-    dataset_name = dataset_name.substr(0, dataset_name.find_last_of("."));
-
-    std::cout << "DATASET: " << dataset_name << " TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()/times << "ms" << std::endl;
 
     const size_t real_scc_count = std::unordered_set(SCC_id.begin(), SCC_id.end()).size();
 
@@ -186,11 +196,12 @@ int main(int argc, char** argv) {
                 inputFilename = inputFilename.substr(0, inputFilename.size() - 1);
             }
 
-            // files: celegansneural, foldoc, language, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005, twitter7
+            // files: celegansneural, foldoc, language, eu-2005, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005, twitter7
             filesToRun = {
                 inputFilename + "/celegansneural/celegansneural.mtx",
                 inputFilename + "/foldoc/foldoc.mtx",
                 inputFilename + "/language/language.mtx",
+                inputFilename + "/eu-2005/eu-2005.mtx",
                 inputFilename + "/wiki-topcats/wiki-topcats.mtx",
                 inputFilename + "/sx-stackoverflow/sx-stackoverflow.mtx",
                 inputFilename + "/wb-edu/wb-edu.mtx",

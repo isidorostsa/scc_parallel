@@ -13,9 +13,14 @@
 
 #define DEFAULT_PREFIX "../../matrices/"
 
-void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
+void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG, size_t NUM_THREADS) {
     if(!std::filesystem::exists(filename)) {
         std::cout << "File not found: " << filename << std::endl;
+        return;
+    }
+
+    if(times == 0) {
+        std::cout << "Invalid number of times to run" << std::endl;
         return;
     }
 
@@ -39,24 +44,29 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
     DEB("Running " << times << " times")
 
     std::vector<size_t> SCC_id;
-    auto start = std::chrono::high_resolution_clock::now();
-    for(size_t i = 0; i < times; i++) {
-        // csr_ptr may be null, but that's fine, we pass csc twice 
-        DEB("Starting run " << i)
-        if(!TOO_BIG) {
-            SCC_id = colorSCC_no_conversion(csc, csr, true, DEBUG);
-        } else {
-            SCC_id = colorSCC_no_conversion(csc, csr, false, DEBUG);
-        }
-        DEB("Finished run " << i)
-    }
-    DEB("Finished all runs")
-    auto end = std::chrono::high_resolution_clock::now();
+    std::vector<int64_t> times_in_us;
 
     std::string dataset_name = filename.substr(filename.find_last_of("/") + 1);
     dataset_name = dataset_name.substr(0, dataset_name.find_last_of("."));
 
-    std::cout << "DATASET: " << dataset_name << " TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()/times << "ms" << std::endl;
+    for(size_t i = 0; i < times; i++) {
+        DEB("Starting run " << i)
+        // csr may a null object, but that's fine, the next variable communicates that
+        auto start = std::chrono::high_resolution_clock::now();
+        if(!TOO_BIG) {
+            SCC_id = colorSCC_no_conversion(csc, csr, true, DEBUG, NUM_THREADS);
+        } else {
+            SCC_id = colorSCC_no_conversion(csc, csr, false, DEBUG, NUM_THREADS);
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        times_in_us.push_back(time);
+        std::cout << "DATASET: " << dataset_name << "\tTIME: " << time << "us" << std::endl;
+
+        DEB("Finished run " << i)
+    }
+    DEB("Finished all runs")
 
     const size_t real_scc_count = std::unordered_set(SCC_id.begin(), SCC_id.end()).size();
 
@@ -134,15 +144,17 @@ int main(int argc, char** argv) {
     size_t times = 1;
     bool DEBUG = false;
     bool TOO_BIG = false;
+    size_t NUM_THREADS = 1;
 
     if(argc == 1) {
-        std::cout << "Usage: " << argv[0] << " [relativeFilePath: path to \".mtx\" file or folder] [timesToRun: int] [DEBUG: 1 or 0] [TOO_BIG: 1 or 0]\n" << std::endl;
+        std::cout << "Usage: " << argv[0] << " [relativeFilePath: path to \".mtx\" file or folder] [timesToRun: int] [DEBUG: 1 or 0] [TOO_BIG: 1 or 0] [NUM_THREADS: 1...24]\n" << std::endl;
 
         std::cout << "Description:\n" << std::endl;
         std::cout << "    relativeFilePath:     The path to the file to run, relative to the matrices folder" << std::endl;
         std::cout << "    timesToRun:           The number of times to run the algorithm, the resulting time will be the average" << std::endl;
         std::cout << "    DEBUG:                If true, will print out debug information" << std::endl;
         std::cout << "    TOO_BIG:              If true, will skip the CSR conversion to save space and run the algorithm only with the CSC Matrix, which will be a little slower" << std::endl;
+        std::cout << "    NUM_THREADS:          The number of threads to use in the pthreads implementation" << std::endl;
         std::cout << std::endl;
 
         std::cout << "Running with relativeFilePath not ending in \".mtx\" means this is the matrix folder the programm will try to run the algorithm on all files of the form:" << std::endl;
@@ -158,7 +170,7 @@ int main(int argc, char** argv) {
 
         std::cout << "Running test with default dataset: " << std::endl;
         std::cout << std::endl;
-        testFile(DEFAULT_PREFIX + std::string("language/language.mtx"), times, DEBUG, TOO_BIG);
+        testFile(DEFAULT_PREFIX + std::string("language/language.mtx"), times, DEBUG, TOO_BIG, NUM_THREADS);
         return 0;
     }
 
@@ -174,6 +186,10 @@ int main(int argc, char** argv) {
         TOO_BIG = std::stoi(argv[4]) == 1;
     }
 
+    if(argc > 5) {
+        NUM_THREADS = std::stoi(argv[5]);
+    }
+
     std::vector<std::string> filesToRun;
  
     if(argc > 1) {
@@ -186,11 +202,12 @@ int main(int argc, char** argv) {
                 inputFilename = inputFilename.substr(0, inputFilename.size() - 1);
             }
 
-            // files: celegansneural, foldoc, language, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005, twitter7
+            // files: celegansneural, foldoc, language, eu-2005, wiki-topcats, sx-stackoverflow, wb-edu, indochina-2004, uk-2002, arabic-2005, uk-2005, twitter7
             filesToRun = {
                 inputFilename + "/celegansneural/celegansneural.mtx",
                 inputFilename + "/foldoc/foldoc.mtx",
                 inputFilename + "/language/language.mtx",
+                inputFilename + "/eu-2005/eu-2005.mtx",
                 inputFilename + "/wiki-topcats/wiki-topcats.mtx",
                 inputFilename + "/sx-stackoverflow/sx-stackoverflow.mtx",
                 inputFilename + "/wb-edu/wb-edu.mtx",
@@ -211,7 +228,7 @@ int main(int argc, char** argv) {
     std::cout << std::endl;
 
     for(auto& filename : filesToRun) {
-        testFile(filename, times, DEBUG, TOO_BIG);
+        testFile(filename, times, DEBUG, TOO_BIG, NUM_THREADS);
     }
 
     std::cout << std::endl;
