@@ -13,7 +13,6 @@
 #include "sparse_util.hpp"
 
 #include <omp.h>
-#include <coz.h>
 
 #define UNCOMPLETED_SCC_ID 18446744073709551615
 #define MAX_COLOR 18446744073709551615
@@ -181,7 +180,6 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 
     DEB("Starting conversion");
     
-    COZ_BEGIN("convert");
     # pragma omp parallel sections
     {
         # pragma omp section
@@ -193,7 +191,6 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
             coo_tocsc(M, onb);
         }
     }
-    COZ_END("convert");
     // if we are poor on memory, we can free M
     M.Ai = std::vector<size_t>();
     M.Aj = std::vector<size_t>();
@@ -240,7 +237,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
             colors[i] = SCC_id[i] == UNCOMPLETED_SCC_ID ? i : MAX_COLOR;
         }
 
-        COZ_BEGIN("coloring");
         DEB("Starting to color")
         bool made_change = true;
         while(made_change) {
