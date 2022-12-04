@@ -86,7 +86,7 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
 
         val[ind] = i;
         ptr[j+1]++;
-
+        
         if(fgetc(fin) != '\n') {
             while(fgetc(fin) != '\n') {
                 // do nothing
