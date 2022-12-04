@@ -31,6 +31,7 @@ Coo_matrix loadFileToCoo(const std::string filename) {
     return Coo_matrix{n, nnz, std::move(Ai), std::move(Aj)};
 }
 
+/*
 Sparse_matrix loadFileToCSC(const std::string filename) {
     std::ifstream fin(filename);
 
@@ -60,6 +61,47 @@ Sparse_matrix loadFileToCSC(const std::string filename) {
     // automatically moves the vectors, no copying is done here
     return Sparse_matrix{n, nnz, std::move(ptr), std::move(val), Sparse_matrix::CSC};
 }
+*/
+
+Sparse_matrix loadFileToCSC(const std::string filename) {
+    FILE *fin = fopen(filename.c_str(), "r");
+
+    size_t n = -1, nnz;
+    while(fgetc(fin) == '%') {
+        while(fgetc(fin) != '\n') {
+            // do nothing
+        };
+    }
+
+    fscanf(fin, "%zu %zu %zu", &n, &n, &nnz);
+
+    std::vector<size_t> ptr(n+1, 0);
+    std::vector<size_t> val(nnz);
+
+    size_t i, j, throwaway;
+    // lines may be of the form: i j or i j throwaway where throwaway can be any number of characters until a newline
+    for(size_t ind = 0; ind < nnz; ++ind) {
+        fscanf(fin, "%zu %zu", &i, &j);
+        --i; --j;
+
+        val[ind] = i;
+        ptr[j+1]++;
+
+        if(fgetc(fin) != '\n') {
+            while(fgetc(fin) != '\n') {
+                // do nothing
+            };
+        }
+    }
+
+    for(size_t i = 0; i < n; ++i) {
+        ptr[i+1] += ptr[i];
+    }
+
+    // automatically moves the vectors, no copying is done here
+    return Sparse_matrix{n, nnz, std::move(ptr), std::move(val), Sparse_matrix::CSC};
+}
+
 
 void csr_tocsc(const Sparse_matrix& csr, Sparse_matrix& csc) {
     csc.n = csr.n;

@@ -198,8 +198,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         vleft.push_back(i);
     }
 
-    printl
-    //DEB("First time trim")
+    DEB("First time trim")
     if(USE_ONB) {
     printl
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
