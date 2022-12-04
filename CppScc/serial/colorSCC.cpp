@@ -223,6 +223,8 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
                 for(size_t j = inb.ptr[u]; j < inb.ptr[u + 1]; j++) {
                     size_t v = inb.val[j];
+                    
+                    std::cout << "Size of cols" << colors.size() << std::endl;
 
                     size_t new_color = colors[v];
 
