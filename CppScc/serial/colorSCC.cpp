@@ -24,11 +24,11 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
 
         bool hasOutgoing = onb.ptr[source] != onb.ptr[source + 1];
 
-        if(!hasIncoming | !hasOutgoing) {
+        if(!hasIncoming || !hasOutgoing) {
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
-    //std::cout << "trimed: " << trimed << std::endl;
+    std::cout << "trimed: " << trimed << std::endl;
 
     return trimed;
 }
@@ -88,7 +88,7 @@ size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix
             }
         }
 
-        if(!hasIncoming | !hasOutgoing) {
+        if(!hasIncoming || !hasOutgoing) {
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
@@ -180,17 +180,9 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 // If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
-
-    
-
     std::vector<size_t> SCC_id(n);
 
-    
-
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
-
-    
-
     size_t SCC_count = 0;
 
     std::vector<size_t> vleft;
@@ -200,11 +192,8 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
     DEB("First time trim")
     if(USE_ONB) {
-    
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
-    
     } else {
-    
         SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
     
     }
@@ -215,8 +204,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
-    std::vector<size_t> colors(n);
-    std::fill(colors.begin(), colors.end(), MAX_COLOR);
+    std::vector<size_t> colors(n, MAX_COLOR);
 
     size_t iter = 0;
     size_t total_tries = 0;
