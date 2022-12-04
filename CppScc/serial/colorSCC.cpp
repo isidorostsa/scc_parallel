@@ -35,7 +35,8 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
 // first time only, but only one matrix
 size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
-    std::vector<bool> hasOtherWay(nb.n, false);
+    std::vector<bool> hasOtherWay(nb.n);
+    std::fill(hasOtherWay.begin(), hasOtherWay.end(), false);
 
 
     for(size_t source = 0; source < nb.n; source++) {
@@ -174,8 +175,6 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 // If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
-
-    std::cout << "Got here";
 
     std::vector<size_t> SCC_id(n);
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
