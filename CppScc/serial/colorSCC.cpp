@@ -11,8 +11,8 @@
 
 #define DEB(x) if(DEBUG) {std::cout << x << std::endl;}
 
-#define UNCOMPLETED_SCC_ID -1
-#define MAX_COLOR -1
+#define UNCOMPLETED_SCC_ID 18446744073709551615
+#define MAX_COLOR 18446744073709551615
 
 // For the first time only, where all SCC_ids are -1
 size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
@@ -179,9 +179,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     std::fill(SCC_id.begin(), SCC_id.end(), UNCOMPLETED_SCC_ID);
     size_t SCC_count = 0;
 
-    std::vector<size_t> vleft(n);
+    std::vector<size_t> vleft;
     for (size_t i = 0; i < n; i++) {
-        vleft[i] = i;
+        vleft.push_back(i);
     }
 
     std::cout << "Got here";
