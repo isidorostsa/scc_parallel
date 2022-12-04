@@ -12,7 +12,6 @@
 #include "colorSCC.hpp"
 #include "sparse_util.hpp"
 
-#include <coz.h>
 #include <cilk/cilk.h>
 //#include <cilk/reducer_opadd.h>
 
@@ -175,13 +174,10 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 
     DEB("Starting conversion");
     
-    COZ_BEGIN("convert");
-
     cilk_spawn coo_tocsr(M, inb);
     coo_tocsc(M, onb);
     cilk_sync;
 
-    COZ_END("convert");
     // if we are poor on memory, we can free M
     M.Ai = std::vector<size_t>();
     M.Aj = std::vector<size_t>();
