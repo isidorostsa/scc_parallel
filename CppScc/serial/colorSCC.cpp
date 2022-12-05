@@ -28,7 +28,6 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
             SCC_id[source] = SCC_count + ++trimed;
         }
     }
-    std::cout << "trimed: " << trimed << std::endl;
 
     return trimed;
 }
@@ -195,7 +194,6 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
     } else {
         SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
-    
     }
     DEB("Finished trim")
 
@@ -204,7 +202,8 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
-    std::vector<size_t> colors(n, MAX_COLOR);
+    std::vector<size_t> colors(n);
+    std::fill(colors.begin(), colors.end(), MAX_COLOR);
 
     size_t iter = 0;
     size_t total_tries = 0;
