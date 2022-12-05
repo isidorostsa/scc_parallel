@@ -1,5 +1,8 @@
 # pdsProject
 Project 1 for Parallel and Distributed Systems in A.U.Th. 
+
+The report is the "report.pdf" file contained here.
+
 Build any of the files by going to the appropriate directory and running `make`
 
 To build the OpenCilk version edit the makefile to point to the location of clang++ in your system.
