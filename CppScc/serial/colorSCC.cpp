@@ -15,7 +15,14 @@
 #define UNCOMPLETED_SCC_ID 18446744073709551615
 #define MAX_COLOR 18446744073709551615
 
-// For the first time only, where all SCC_ids are -1
+/**
+ * @brief A trimming function, without checking for removed vertices
+ * @param inb incoming neighbors
+ * @param onb outgoing neighbors
+ * @param SCC_id the SCC id of each vertex, needed to save assign the SCC id of the trimmed vertices
+ * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
+ * @return the number of trimmed vertices
+ */
 size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
 
@@ -32,7 +39,14 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
     return trimed;
 }
 
-// first time only, but only one matrix
+
+/**
+ * @brief A trimming function, without checking for removed vertices, and with only knowing the neighbors in one direction
+ * @param nb neighbors
+ * @param SCC_id the SCC id of each vertex, needed to save assign the SCC id of the trimmed vertices
+ * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
+ * @return the number of trimmed vertices
+ */
 size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
     
@@ -63,7 +77,16 @@ size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, s
     
     return trimed;
 }
-// vleft + onb
+
+/**
+ * @brief A trimming function. Assumes that the vertices in vleft are not trimmed yet, and that the SCC_id of the trimmed vertices is already set. Changes SCC_IDs, does not change vleft.
+ * @param inb incoming neighbors
+ * @param onb outgoing neighbors 
+ * @param vleft the vertices that are not trimmed yet
+ * @param SCC_id the SCC id of each vertex
+ * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
+ * @return the number of trimmed vertices
+ */
 size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
                                     std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
@@ -96,6 +119,15 @@ size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix
     return trimed;
 }
 
+
+/**
+ * @brief A trimming function. Assumes that the vertices in vleft are not trimmed yet, and that the SCC_id of the trimmed vertices is already set. Changes SCC_IDs, does not change vleft.
+ * @param nb neighbors
+ * @param vleft the vertices that are not trimmed yet
+ * @param SCC_id the SCC id of each vertex
+ * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
+ * @return the number of trimmed vertices
+ */
 size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
                                         std::vector<size_t>& SCC_id, size_t SCC_count) { 
 
@@ -136,6 +168,17 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
     return trimed;
 }
 
+
+/**
+ * @brief BFS that changes the SCC_id of all vertices it reaches that have the given color. Assumes that the SCC_id of the trimmed vertices is already set.
+ * @param nb neighbors in the direction of the BFS
+ * @param source the source vertex
+ * @param SCC_id the SCC id of each vertex
+ * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the assigned vertices
+ * @param colors the color of each vertex
+ * @param color the color of the vertices that will be assigned the SCC_count
+ * @return (void)
+ */
 void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source, std::vector<size_t>& SCC_id,
                                 const size_t SCC_count, const std::vector<size_t>& colors, const size_t color) {
     SCC_id[source] = SCC_count;
@@ -158,7 +201,12 @@ void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source
     }
 }
 
-// onb may be nullptr but that's fine, it leads to a slightly slower version of the algorithm only where the triming happens
+/**
+ * @brief Finds the SCCs of a directed graph. 
+ * @param M the graph in coo format
+ * @param DEBUG if true, prints debug info
+ * @return the SCC id of each vertex
+ */
 std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     Sparse_matrix inb;
     Sparse_matrix onb;
@@ -177,6 +225,14 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
 }
 
 // If !USE_ONB then we never use onb, but we still need to pass it, an optional wouldn't work because we need to pass it by reference
+/**
+ * @brief Finds the SCCs of a directed graph. Assumes that the graph is in csr and csc format. onb is optional.
+ * @param inb incoming neighbors
+ * @param onb outgoing neighbors (optional)
+ * @param USE_ONB if true, onb is used, otherwise it is ignored
+ * @param DEBUG if true, prints debug info
+ * @return the SCC id of each vertex
+ */
 std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Sparse_matrix& onb, bool USE_ONB, bool DEBUG) {
     size_t n = inb.n;
     std::vector<size_t> SCC_id(n);
