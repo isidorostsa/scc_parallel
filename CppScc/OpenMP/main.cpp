@@ -62,11 +62,23 @@ void testFile(std::string filename, size_t times, bool DEBUG, bool TOO_BIG) {
 
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         times_in_us.push_back(time);
-        std::cout << "DATASET: " << dataset_name << "\tTIME: " << time << "us" << std::endl;
+        //std::cout << "DATASET: " << dataset_name << "\tTIME: " << time << "us" << std::endl;
+        //std::cout << time  << std::endl;
 
         DEB("Finished run " << i)
     }
     DEB("Finished all runs")
+    // print the times as a csv
+    // print the times as a csv
+    for(size_t i = 0; i < times_in_us.size(); i++) {
+        if (i == times - 1) {
+            std::cout << times_in_us[i];
+        } else {
+            std::cout << times_in_us[i] << "\t";
+        }
+    }
+    std::cout << std::endl;
+
 
     const size_t real_scc_count = std::unordered_set(SCC_id.begin(), SCC_id.end()).size();
 
