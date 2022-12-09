@@ -17,5 +17,6 @@ Run with the command `./colorSCC` to see the usage information.
 
 The report uploaded here has updated and more accurate measurements. Some benchmarking was done after the deadline due to no longer needing the computer to write the report.
 
+Key diagrams can also be found here: https://imgur.com/a/KI79XMh
 
 Have fun testing!
