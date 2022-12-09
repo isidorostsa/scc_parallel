@@ -33,3 +33,6 @@
 
 # Reference Input Data
 *.mtx
+
+# vscode files
+.vscode
