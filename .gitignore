@@ -41,3 +41,7 @@ CppScc/.vscode
 CppScc/pthread/.vscode
 CppScc/OpenMP/.vscode
 CppScc/OpenCilk/.vscode
+CppScc/OpenCilk/colorSCC
+CppScc/OpenMP/colorSCC
+CppScc/pthread/colorSCC
+CppScc/serial/colorSCC
