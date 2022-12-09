@@ -151,7 +151,6 @@ size_t trimVertices_inplace_single_direction(const Sparse_matrix& nb, const std:
             // if SCC_id[neighbor] == UNCOMPLETED_SCC_ID, then neighbor in vleft
             if(SCC_id[neighbor] == UNCOMPLETED_SCC_ID) {
                 hasOneWay = true;
-                // need index of neighbor
                 hasOtherWay[neighbor] = true;
             }
         }
@@ -203,31 +202,6 @@ void bfs_colors_inplace( const Sparse_matrix& nb, const size_t source, std::vect
         }
     }
 }
-
-
-/**
- * @brief Finds the SCCs of a directed graph. 
- * @param M the graph in coo format
- * @param DEBUG if true, prints debug info
- * @return the SCC id of each vertex
- */
-std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
-    Sparse_matrix inb;
-    Sparse_matrix onb;
-
-    DEB("Starting conversion");
-    
-    coo_tocsr(M, inb);
-    coo_tocsc(M, onb);
-
-    // if we are poor on memory, we can free M
-    M.Ai = std::vector<size_t>();
-    M.Aj = std::vector<size_t>();
-    DEB("Finished conversion");
-
-    return colorSCC_no_conversion(inb, onb, true, DEBUG);
-}
-
 
 /**
  * @brief Finds the SCCs of a directed graph. Assumes that the graph is in csr and csc format. onb is optional.
@@ -299,11 +273,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
                 }
             }
         }
+        DEB("Finished coloring")
 
         // Create a set of the unique colors to schedule the BFS
         // A BFS starts from each unique color
-        DEB("Finished coloring")
-
         auto unique_colors_set = std::unordered_set<size_t> (colors.begin(), colors.end());
         unique_colors_set.erase(MAX_COLOR);
 
