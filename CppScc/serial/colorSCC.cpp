@@ -217,9 +217,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     size_t SCC_count = 0;
 
     // an array of vertices that are left to be processed
-    std::vector<size_t> vleft;
+    std::vector<size_t> vleft(n);
     for (size_t i = 0; i < n; i++) {
-        vleft.push_back(i);
+        vleft[i] = i;
     }
 
     DEB("First time trim")
@@ -236,7 +236,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
     DEB("Finished first erasure")
     DEB("Size difference: " << SCC_count)
 
-    std::vector<size_t> colors(n, MAX_COLOR);
+    std::vector<size_t> colors(n);
 
     size_t iter = 0;
     size_t total_tries = 0;
