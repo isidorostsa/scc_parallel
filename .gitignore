@@ -36,3 +36,8 @@
 
 # vscode files
 .vscode
+JuliaSCC/.vscode
+CppScc/.vscode
+CppScc/pthread/.vscode
+CppScc/OpenMP/.vscode
+CppScc/OpenCilk/.vscode
