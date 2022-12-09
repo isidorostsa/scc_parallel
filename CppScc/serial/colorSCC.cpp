@@ -23,7 +23,7 @@
  * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
  * @return the number of trimmed vertices
  */
-size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+size_t trimVertices_inplace_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
 
     for(size_t source = 0; source < inb.n; source++) {
@@ -50,7 +50,7 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
  * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
  * @return the number of trimmed vertices
  */
-size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+size_t trimVertices_inplace_first_time_single_direction(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
     
     // we can check the neighbors of the vertices in one direction directly,
@@ -89,7 +89,7 @@ size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, s
  * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
  * @return the number of trimmed vertices
  */
-size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
+size_t trimVertices_inplace(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
                                     std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     size_t trimed = 0;
 
@@ -131,7 +131,7 @@ size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix
  * @param SCC_count the number of SCCs found so far, needed to calculate the scc id of the trimmed vertices
  * @return the number of trimmed vertices
  */
-size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
+size_t trimVertices_inplace_single_direction(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
                                         std::vector<size_t>& SCC_id, size_t SCC_count) { 
 
     size_t trimed = 0;
@@ -171,6 +171,7 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
     return trimed;
 }
 
+
 /**
  * @brief BFS that changes the SCC_id of all vertices it reaches that have the given color. Assumes that the SCC_id of the trimmed vertices is already set.
  * @param nb neighbors in the direction of the BFS
@@ -181,7 +182,7 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
  * @param color the color of the vertices that will be assigned the SCC_count
  * @return (void)
  */
-void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source, std::vector<size_t>& SCC_id,
+void bfs_colors_inplace( const Sparse_matrix& nb, const size_t source, std::vector<size_t>& SCC_id,
                                 const size_t SCC_count, const std::vector<size_t>& colors, const size_t color) {
     SCC_id[source] = SCC_count;
 
@@ -202,6 +203,7 @@ void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source
         }
     }
 }
+
 
 /**
  * @brief Finds the SCCs of a directed graph. 
@@ -226,6 +228,7 @@ std::vector<size_t> colorSCC(Coo_matrix& M, bool DEBUG) {
     return colorSCC_no_conversion(inb, onb, true, DEBUG);
 }
 
+
 /**
  * @brief Finds the SCCs of a directed graph. Assumes that the graph is in csr and csc format. onb is optional.
  * @param inb incoming neighbors
@@ -247,9 +250,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
     DEB("First time trim")
     if(USE_ONB) {
-        SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
+        SCC_count += trimVertices_inplace_first_time(inb, onb, SCC_id, SCC_count);
     } else {
-        SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
+        SCC_count += trimVertices_inplace_first_time_single_direction(inb, SCC_id, SCC_count);
     }
     DEB("Finished trim")
 
@@ -285,7 +288,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
                 // vleft then it has color MAX_COLOR so we dont need to check if it is in vleft
                 for(size_t j = inb.ptr[u]; j < inb.ptr[u + 1]; j++) {
                     size_t v = inb.val[j];
-                    
+
                     size_t new_color = colors[v];
 
                     if(new_color < colors[u]) {
@@ -312,9 +315,10 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         DEB("Starting bfs")
         for(size_t i = 0; i < unique_colors.size(); i++) {
             const size_t color = unique_colors[i];
+            // so each BFS has its own SCC id
             const size_t _SCC_count = SCC_count + i + 1;
 
-            bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
+            bfs_colors_inplace(inb, color, SCC_id, _SCC_count, colors, color);
         }
         SCC_count += unique_colors.size();
         DEB("Finished BFS")
@@ -326,9 +330,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
         // trim the graph as it is now
         if (USE_ONB) {
-           SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace(inb, onb, vleft, SCC_id, SCC_count);
         } else {
-           SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_single_direction(inb, vleft, SCC_id, SCC_count);
         }
 
         // clean up vleft after trim

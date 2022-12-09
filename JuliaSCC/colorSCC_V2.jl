@@ -164,7 +164,7 @@ end
 
 
 
-function bfs_sparse(nb, nb_ptr, source, allowed_vertices)
+function bfs(nb, nb_ptr, source, allowed_vertices)
     visited = falses(length(nb_ptr)-1)
     visited[source] = true
     queue = [source]
@@ -180,7 +180,7 @@ function bfs_sparse(nb, nb_ptr, source, allowed_vertices)
     return visited
 end
 
-function bfs_sparse_colors!(nb, nb_ptr, source, colors, color)
+function bfs_colors!(nb, nb_ptr, source, colors, color)
     visited = falses(length(nb_ptr)-1)
     visited[source] = true
     queue = [source]
@@ -196,7 +196,7 @@ function bfs_sparse_colors!(nb, nb_ptr, source, colors, color)
     return visited
 end
 
-function bfs_sparse_colors_no_visited_all_in_place!(nb, nb_ptr, source, colors, color, SCC_id, SCCs_found, vleft)
+function bfs_colors_no_visited_all_in_place!(nb, nb_ptr, source, colors, color, SCC_id, SCCs_found, vleft)
 #    visited = falses(length(nb_ptr)-1)
 #    visited[source] = true
     MAX_COLOR = 2^63-1
@@ -402,10 +402,10 @@ function colorSCC_matrix(M, DEBUG = false)
             DEB("Starting bfs for color "* string(color), DEBUG)
 
             #vertices_in_rev_bfs = bfs_matrix(M', source, Vc)
-            #vertices_in_rev_bfs = bfs_sparse(inb, inb_ptr, color, Vc)
+            #vertices_in_rev_bfs = bfs(inb, inb_ptr, color, Vc)
 
             SCCs_found += 1
-            bfs_sparse_colors_no_visited_all_in_place!(inb, inb_ptr, color, colors, color, SCC_id, SCCs_found, vleft)
+            bfs_colors_no_visited_all_in_place!(inb, inb_ptr, color, colors, color, SCC_id, SCCs_found, vleft)
             
             #SCC_id[vertices_in_rev_bfs] .= SCCs_found
 

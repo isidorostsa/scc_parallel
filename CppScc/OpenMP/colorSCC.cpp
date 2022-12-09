@@ -18,7 +18,7 @@
 #define MAX_COLOR 18446744073709551615
 
 // For the first time only, where all SCC_ids are -1
-size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+size_t trimVertices_inplace_first_time(const Sparse_matrix& inb, const Sparse_matrix& onb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     //std::atomic<size_t> trimed(0);
     std::atomic<size_t> trimed(0);
 
@@ -38,7 +38,7 @@ size_t trimVertices_inplace_normal_first_time(const Sparse_matrix& inb, const Sp
 }
 
 // first time only, but only one matrix
-size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
+size_t trimVertices_inplace_first_time_single_direction(const Sparse_matrix& nb, std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     std::atomic<size_t> trimed(0);
     //std::vector<bool> hasOtherWay(nb.n, false);
 
@@ -73,7 +73,7 @@ size_t trimVertices_inplace_normal_first_time_missing(const Sparse_matrix& nb, s
 }
 
 // vleft + onb
-size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
+size_t trimVertices_inplace(const Sparse_matrix& inb, const Sparse_matrix& onb, const std::vector<size_t>& vleft,
                                     std::vector<size_t>& SCC_id, const size_t SCC_count) { 
     std::atomic<size_t> trimed(0);
     //size_t trimed = 0;
@@ -106,7 +106,7 @@ size_t trimVertices_inplace_normal(const Sparse_matrix& inb, const Sparse_matrix
     return trimed;
 }
 
-size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
+size_t trimVertices_inplace_single_direction(const Sparse_matrix& nb, const std::vector<size_t>& vleft,
                                         std::vector<size_t>& SCC_id, size_t SCC_count) { 
 
     //size_t trimed = 0;
@@ -152,7 +152,7 @@ size_t trimVertices_inplace_normal_missing(const Sparse_matrix& nb, const std::v
     return trimed;
 }
 
-void bfs_sparse_colors_all_inplace( const Sparse_matrix& nb, const size_t source, std::vector<size_t>& SCC_id,
+void bfs_colors_inplace( const Sparse_matrix& nb, const size_t source, std::vector<size_t>& SCC_id,
                                 const size_t SCC_count, const std::vector<size_t>& colors, const size_t color) {
     SCC_id[source] = SCC_count;
 
@@ -213,9 +213,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
 
     DEB("First time trim")
     if(USE_ONB) {
-        SCC_count += trimVertices_inplace_normal_first_time(inb, onb, SCC_id, SCC_count);
+        SCC_count += trimVertices_inplace_first_time(inb, onb, SCC_id, SCC_count);
     } else {
-        SCC_count += trimVertices_inplace_normal_first_time_missing(inb, SCC_id, SCC_count);
+        SCC_count += trimVertices_inplace_first_time_single_direction(inb, SCC_id, SCC_count);
     }
     DEB("Finished trim")
 
@@ -279,7 +279,7 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
             const size_t color = unique_colors[i];
             const size_t _SCC_count = SCC_count + i + 1;
 
-            bfs_sparse_colors_all_inplace(inb, color, SCC_id, _SCC_count, colors, color);
+            bfs_colors_inplace(inb, color, SCC_id, _SCC_count, colors, color);
         }
         SCC_count += unique_colors.size();
         DEB("Finished BFS")
@@ -289,9 +289,9 @@ std::vector<size_t> colorSCC_no_conversion(const Sparse_matrix& inb, const Spars
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });
 
         if (USE_ONB) {
-           SCC_count += trimVertices_inplace_normal(inb, onb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace(inb, onb, vleft, SCC_id, SCC_count);
         } else {
-           SCC_count += trimVertices_inplace_normal_missing(inb, vleft, SCC_id, SCC_count);
+           SCC_count += trimVertices_inplace_single_direction(inb, vleft, SCC_id, SCC_count);
         }
         // clean up vleft after trim
         std::erase_if(vleft, [&](size_t v) { return SCC_id[v] != UNCOMPLETED_SCC_ID; });

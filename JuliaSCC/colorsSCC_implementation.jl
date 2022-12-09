@@ -186,7 +186,7 @@ function bfs_matrix(adjecency_matrix, source, allowed_vertices)
     return Vector{Bool}(current)
 end
 
-function bfs_sparse(inb, inb_ptr, onb, onb_ptr, source, allowed_vertices)
+function bfs(inb, inb_ptr, onb, onb_ptr, source, allowed_vertices)
     source = Vector{Bool}(source)
     current = copy(source)
     while true
@@ -397,7 +397,7 @@ function colorSCC_matrix(M, DEBUG = false)
                 println("starting bfs")
             end
 
-            vertices_in_rev_bfs = bfs_sparse(onb, onb_ptr, inb, inb_ptr, source, Vc)
+            vertices_in_rev_bfs = bfs(onb, onb_ptr, inb, inb_ptr, source, Vc)
             print(source)
             print(vertices_in_rev_bfs)
             #vertices_in_rev_bfs = bfs_matrix(M, source, Vc)
