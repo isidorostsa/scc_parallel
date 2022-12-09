@@ -46,3 +46,4 @@ CppScc/OpenMP/colorSCC
 CppScc/pthread/colorSCC
 CppScc/serial/colorSCC
 CppScc/TarKos
+CppScc/matlabPlots
