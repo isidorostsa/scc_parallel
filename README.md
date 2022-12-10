@@ -19,4 +19,6 @@ The report uploaded here has updated and more accurate measurements. Some benchm
 
 Key diagrams can also be found here: https://imgur.com/a/KI79XMh
 
+System Used: Lenovo Ideapad 5 pro, AMD 5600h 6 Core - 12 Thread CPU, 16GB 3200MHZ DDR4 RAM
+
 Have fun testing!
