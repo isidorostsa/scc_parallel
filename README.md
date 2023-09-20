@@ -1,8 +1,8 @@
-# pdsProject
+# Strongly Connected Components using different parallelism backends
 
-Project 1 for Parallel and Distributed Systems in A.U.Th.
+A Project for Parallel and Distributed Systems in A.U.Th.
 
-The report is the "report.pdf" file contained here.
+There is a report of benchmarks and findings named "report.pdf" contained here.
 
 Build any of the files by going to the appropriate directory and running `make`.
 
